@@ -1,11 +1,13 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { products } from '../data/products.js'
+import { useProducts } from '../lib/products.js'
+import { cld } from '../lib/cloudinary.js'
 import { fmt, site } from '../data/site.js'
 import { track } from '../lib/track.js'
 import { Header, Footer, Icon } from '../components/Layout.jsx'
 
 export default function Home() {
+  const products = useProducts()
   useEffect(() => {
     document.title = `${site.brand} — ${site.tagline}`
     track('view', { slug: 'home' })
@@ -22,7 +24,7 @@ export default function Home() {
         <section className="grid">
           {products.map((p) => (
             <Link key={p.slug} to={`/p/${p.slug}`} className="card">
-              <div className="card-img"><img src={p.images[0].src} alt={p.images[0].alt} /></div>
+              <div className="card-img"><img src={cld(p.images[0].src, 'f_auto,q_auto,w_700')} alt={p.images[0].alt} loading="lazy" /></div>
               <div className="card-body">
                 <div className="eyebrow">{p.category}</div>
                 <h2>{p.name}</h2>

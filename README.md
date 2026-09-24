@@ -16,18 +16,45 @@ npm run dev        # http://localhost:5173/p/gar-zugshruulegch-nom
 - **Сэтгэгдэл**: `reviews: []` хэсэгт зөвхөн бодит худалдан авагчийн сэтгэгдлийг зөвшөөрөлтэй нь нэмнэ. Хоосон бол хэсэг нь харагдахгүй.
 - Багцын агуулга (`includes`), насны ангилал зэргийг Drop Arena-ийн мэдээлэлтэй тулгаж шалгаарай.
 
-## 3. Firebase (click tracking, сонголтоор)
-1. console.firebase.google.com → шинэ project → Firestore Database үүсгэнэ.
-2. Project settings → Web app нэмээд config-ийг `.env` файлд хуулна (`.env.example`-ыг харна уу).
-3. Firestore → Rules хэсэгт `firestore.rules`-ийн агуулгыг буулгаж Publish хийнэ.
-4. `events` collection-д `view` болон `checkout` бичлэгүүд `source` (facebook, instagram…) талбартайгаар орно.
+## 3. Админ хэсэг — бараа нэмэх (`/admin`)
+`https://ТАНЫ-ДОМЭЙН/admin` хуудаснаас код засахгүйгээр бараа нэмнэ: **зураг, бичлэг (видео), тайлбар, үнэ, захиалгын линк**.
+Зураг/бичлэг **Cloudinary** руу, барааны мэдээлэл **Firebase Firestore** руу хадгалагдана.
 
-Firebase тохируулаагүй ч сайт бүрэн ажиллана.
+### Нэг удаагийн тохиргоо
+**Firebase** (config нь `src/lib/firebase.js`-д аль хэдийн орсон — `olzstore` төсөл)
+1. console.firebase.google.com → olzstore → **Firestore Database** → Create database (production mode).
+2. **Authentication** → Get started → Sign-in method → **Google**-ийг идэвхжүүлнэ.
+3. Authentication → Settings → **Authorized domains**-д Vercel домэйнээ нэмнэ (`olz.vercel.app` г.м.).
+4. Firestore → **Rules** хэсэгт `firestore.rules`-ийн агуулгыг буулгаж **Publish** хийнэ
+   (эсвэл `npx firebase-tools deploy --only firestore:rules`).
+5. `/admin` руу орж Google-ээр нэвтэрнэ → дэлгэц дээр таны **UID** гарна.
+6. Firestore → Start collection → Collection ID `admins` → Document ID = тэр UID → Save. Refresh хийхэд админ хэсэг нээгдэнэ.
+
+**Cloudinary**
+1. cloudinary.com → бүртгүүлнэ → Dashboard дээрх **Cloud name**-ийг хуулна.
+2. Settings → Upload → **Upload presets** → Add upload preset → Signing mode: **Unsigned** → Save, нэрийг нь хуулна.
+3. `.env` (болон Vercel → Environment Variables) дээр:
+   ```
+   VITE_CLOUDINARY_CLOUD_NAME=таны-cloud-name
+   VITE_CLOUDINARY_UPLOAD_PRESET=таны-preset
+   ```
+
+### Бараа нэмэх
+- **Зураг / бичлэг**: олон зураг зэрэг сонгож болно, эхнийх нь нүүр зураг. ‹ › товчоор дарааллыг солино. Бичлэг gallery-д ▶ тэмдэгтэй гарна.
+- **Захиалгын линк**: Drop Arena-ийн `https://dropperarena.com/checkout/prod_...` линк бол тоо ширхэг, `ref` код автоматаар нэмэгдэнэ.
+  Өөр линк (Messenger, Google Form…) оруулбал "Захиалах" товч шууд тэр рүү очно.
+- **Дэлгэрэнгүй тайлбар**: хоосон мөрөөр догол мөр тусгаарлана.
+- "Нуух" товчоор барааг устгалгүйгээр сайтаас түр нууна.
+
+`src/data/products.js` доторх бараанууд хэвээр ажиллана — хоёулаа нүүр хуудсанд хамт гарна.
+
+### Click tracking
+`events` collection-д `view` болон `checkout` бичлэгүүд `source` (facebook, instagram…) талбартайгаар орно.
 
 ## 4. Vercel дээр байршуулах
 1. Кодоо GitHub руу push хийнэ.
 2. vercel.com → Add New Project → repo-гоо сонгоно (Vite автоматаар танигдана).
-3. Environment Variables хэсэгт `.env` дахь утгуудаа нэмнэ. `VITE_SITE_URL`-д Vercel домэйнээ бичнэ (FB preview зурагт хэрэгтэй).
+3. Environment Variables хэсэгт `.env` дахь утгуудаа (Cloudinary-г оруулаад) нэмнэ. `VITE_SITE_URL`-д Vercel домэйнээ бичнэ (FB preview зурагт хэрэгтэй).
 4. Deploy.
 
 ## 5. Линкээ хуваалцах
@@ -37,4 +64,5 @@ https://ТАНЫ-ДОМЭЙН/p/gar-zugshruulegch-nom?utm_source=facebook
 https://ТАНЫ-ДОМЭЙН/p/gar-zugshruulegch-nom?utm_source=instagram
 https://ТАНЫ-ДОМЭЙН/p/gar-zugshruulegch-nom?utm_source=tiktok
 ```
+/admin-аас нэмсэн барааны FB preview (зураг, нэр) дараагийн deploy хийхэд үүснэ — Vercel дээр **Redeploy** дарахад хангалттай.
 FB дээр preview шинэчлэгдэхгүй бол developers.facebook.com/tools/debug дээр линкээ "Scrape Again" хийнэ.

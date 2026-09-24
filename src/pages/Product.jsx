@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { getProduct } from '../data/products.js'
+import { useProduct } from '../lib/products.js'
+import { cld, videoPoster } from '../lib/cloudinary.js'
 import { checkoutUrl, priceFor, fmt, site } from '../data/site.js'
 import { track, trackThenGo } from '../lib/track.js'
 import { Header, Footer, Icon } from '../components/Layout.jsx'
@@ -8,7 +9,7 @@ import NotFound from './NotFound.jsx'
 
 export default function Product() {
   const { slug } = useParams()
-  const product = getProduct(slug)
+  const product = useProduct(slug)
   const [qty, setQty] = useState(1)
   const [img, setImg] = useState(0)
   const [going, setGoing] = useState(false)
@@ -30,11 +31,22 @@ export default function Product() {
     return () => io.disconnect()
   }, [product])
 
+  useEffect(() => { setImg(0) }, [slug])
+
+  if (product === undefined) return <Loading />
   if (!product) return <NotFound />
 
   const p = priceFor(product, qty)
   const deal = product.deal
   const nextDeal = deal && qty < deal.minQty
+
+  // Зураг + бичлэгийг нэг gallery-д харуулна
+  const media = [
+    ...product.images.map((im) => ({ ...im, type: 'image' })),
+    ...(product.video ? [{ type: 'video', src: product.video.src, alt: product.name }] : []),
+  ]
+  const cur = media[img] || media[0]
+  const paragraphs = product.description ? product.description.split(/\n\s*\n/).filter(Boolean) : []
 
   const order = () => {
     if (going) return
@@ -49,7 +61,9 @@ export default function Product() {
         <section className="hero">
           <div className="gallery">
             <div className="gallery-main">
-              <img src={product.images[img].src} alt={product.images[img].alt} />
+              {cur.type === 'video'
+                ? <video src={cur.src} poster={videoPoster(cur.src) || undefined} controls playsInline preload="metadata" />
+                : <img src={cld(cur.src)} alt={cur.alt} />}
               {deal && (
                 <span className="sticker">
                   <b>−{deal.percent}%</b>
@@ -57,11 +71,14 @@ export default function Product() {
                 </span>
               )}
             </div>
-            {product.images.length > 1 && (
+            {media.length > 1 && (
               <div className="thumbs">
-                {product.images.map((im, i) => (
-                  <button key={im.src} className={i === img ? 'on' : ''} onClick={() => setImg(i)} aria-label={`Зураг ${i + 1}`}>
-                    <img src={im.src} alt="" />
+                {media.map((m, i) => (
+                  <button key={m.src} className={`${i === img ? 'on' : ''} ${m.type === 'video' ? 'thumb-video' : ''}`}
+                    onClick={() => setImg(i)} aria-label={m.type === 'video' ? 'Бичлэг' : `Зураг ${i + 1}`}>
+                    {m.type === 'video'
+                      ? (videoPoster(m.src) ? <img src={videoPoster(m.src)} alt="" /> : <span className="thumb-play" />)
+                      : <img src={cld(m.src, 'f_auto,q_auto,w_200')} alt="" />}
                   </button>
                 ))}
               </div>
@@ -73,9 +90,11 @@ export default function Product() {
             <h1>{product.name}</h1>
             <p className="lede">{product.tagline}</p>
 
-            <div className="badges">
-              {product.badges.map((b) => <span key={b}><Icon name="check" />{b}</span>)}
-            </div>
+            {product.badges.length > 0 && (
+              <div className="badges">
+                {product.badges.map((b) => <span key={b}><Icon name="check" />{b}</span>)}
+              </div>
+            )}
 
             <div className="price-row">
               <span className="price">{fmt(product.price)}</span>
@@ -118,6 +137,14 @@ export default function Product() {
           </div>
         </section>
 
+        {paragraphs.length > 0 && (
+          <section className="sec desc">
+            <h2>Дэлгэрэнгүй</h2>
+            {paragraphs.map((t, i) => <p key={i}>{t}</p>)}
+          </section>
+        )}
+
+        {product.benefits.length > 0 && (
         <section className="sec">
           <h2>{product.whyTitle || 'Яагаад сонгох вэ?'}</h2>
           <div className="benefits">
@@ -130,9 +157,11 @@ export default function Product() {
             ))}
           </div>
         </section>
+        )}
 
+        {(product.steps.length > 0 || product.includes.length > 0) && (
         <section className="sec split">
-          <div>
+          {product.steps.length > 0 && <div>
             <h2>Хэрхэн ашиглах вэ</h2>
             <ol className="steps">
               {product.steps.map((s, i) => (
@@ -142,14 +171,15 @@ export default function Product() {
                 </li>
               ))}
             </ol>
-          </div>
-          <div className="box">
+          </div>}
+          {product.includes.length > 0 && <div className="box">
             <h2>Багцад юу орсон бэ</h2>
             <ul className="includes">
               {product.includes.map((x) => <li key={x}><Icon name="check" />{x}</li>)}
             </ul>
-          </div>
+          </div>}
         </section>
+        )}
 
         {product.reviews.length > 0 && (
           <section className="sec">
@@ -168,7 +198,7 @@ export default function Product() {
           </section>
         )}
 
-        <section className="sec faq">
+        {product.faq.length > 0 && <section className="sec faq">
           <h2>Түгээмэл асуулт</h2>
           {product.faq.map((f) => (
             <details key={f.q}>
@@ -176,7 +206,7 @@ export default function Product() {
               <p>{f.a}</p>
             </details>
           ))}
-        </section>
+        </section>}
 
         <section className="final">
           <div>
@@ -197,6 +227,16 @@ export default function Product() {
         </div>
         <button className="cta" onClick={order} disabled={going} tabIndex={showBar ? 0 : -1}>Захиалах</button>
       </div>
+    </>
+  )
+}
+
+function Loading() {
+  return (
+    <>
+      <Header />
+      <main className="wrap nf"><p className="lede">Ачаалж байна…</p></main>
+      <Footer />
     </>
   )
 }

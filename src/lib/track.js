@@ -1,23 +1,5 @@
-// Firestore-д "view" ба "checkout" үйлдлийг бүртгэнэ.
-// Env тохируулаагүй бол чимээгүй алгасна — сайт хэвийн ажиллана.
-const cfg = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-}
-const enabled = Boolean(cfg.apiKey && cfg.projectId)
-
-let dbPromise
-function getDb() {
-  if (!enabled) return null
-  if (!dbPromise) {
-    dbPromise = Promise.all([import('firebase/app'), import('firebase/firestore')]).then(
-      ([{ initializeApp }, fs]) => ({ db: fs.getFirestore(initializeApp(cfg)), fs })
-    )
-  }
-  return dbPromise
-}
+// Firestore-д "view" ба "checkout" үйлдлийг бүртгэнэ. Алдаа гарвал чимээгүй алгасна.
+import { getDb } from './firebase.js'
 
 // ?utm_source=facebook гэх мэт параметрийг сесс турш хадгална
 export function getSource() {
@@ -32,10 +14,8 @@ export function getSource() {
 }
 
 export async function track(type, data = {}) {
-  const p = getDb()
-  if (!p) return
   try {
-    const { db, fs } = await p
+    const { db, fs } = await getDb()
     await fs.addDoc(fs.collection(db, 'events'), {
       type,
       source: getSource(),
