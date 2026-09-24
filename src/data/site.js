@@ -16,7 +16,16 @@ export const site = {
 
 export function checkoutUrl(product, qty) {
   const q = Math.max(1, Math.min(99, qty | 0))
-  return `${site.checkoutBase}/${product.productId}?qty=${q}&ref=${encodeURIComponent(site.ref)}`
+  if (product.productId) {
+    return `${site.checkoutBase}/${product.productId}?qty=${q}&ref=${encodeURIComponent(site.ref)}`
+  }
+  // Drop Arena биш захиалгын линк (Messenger, Google Form г.м.) бол шууд тэр рүү нь явуулна
+  return product.orderUrl || '#'
+}
+
+// Drop Arena checkout линкээс prod_xxxx кодыг гаргаж авна
+export function parseProductId(url) {
+  return String(url || '').match(/dropperarena\.com\/checkout\/(prod_[A-Za-z0-9]+)/)?.[1] || ''
 }
 
 export function priceFor(product, qty) {
