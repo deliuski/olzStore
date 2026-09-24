@@ -2,11 +2,10 @@
 //   1) src/data/products.js — код дотор бичсэн бараа
 //   2) Firestore "products" collection — /admin хуудаснаас нэмсэн бараа
 import { useEffect, useState } from 'react'
-import { products as staticProducts, getProduct as getStatic } from '../data/products.js'
+import { products as staticProducts, getProduct as getStatic, defaultFaq } from '../data/products.js'
 import { getDb } from './firebase.js'
 
-// Админаас нэмсэн бараанд тусгай FAQ бичээгүй бол энийг харуулна
-export const defaultFaq = staticProducts[0]?.faq.filter((f) => !/хямдрах/.test(f.q)) ?? []
+export const PLACEHOLDER = '/placeholder.svg'
 
 export function normalize(id, d) {
   return {
@@ -20,7 +19,7 @@ export function normalize(id, d) {
     price: Number(d.price) || 0,
     deal: d.deal?.minQty && d.deal?.percent ? d.deal : null,
     deliveryFee: d.deliveryFee ?? 7000,
-    images: d.images?.length ? d.images : [{ src: '/products/copybook-1.jpg', alt: d.name || '' }],
+    images: d.images?.length ? d.images : [{ src: PLACEHOLDER, alt: d.name || '' }],
     video: d.video?.src ? d.video : null,
     badges: d.badges || [],
     benefits: [],
