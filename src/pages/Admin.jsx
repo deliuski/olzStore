@@ -54,8 +54,11 @@ export default function Admin() {
           const { db, fs } = await getDb()
           const snap = await fs.getDoc(fs.doc(db, 'admins', u.uid))
           setIsAdmin(snap.exists())
-        } catch {
+        } catch (e) {
           setIsAdmin(false)
+          flash('err', e.code === 'permission-denied'
+            ? 'Firestore эрх хүрэхгүй байна: firestore.rules-ийг Firebase Console → Firestore → Rules хэсэгт буулгаж Publish хийнэ үү.'
+            : e.message)
         }
       })
     })
@@ -212,6 +215,7 @@ export default function Admin() {
             <button className="adm-btn" onClick={() => navigator.clipboard?.writeText(user.uid)}>Хуулах</button>
           </div>
           <p className="muted small">Хадгалсны дараа энэ хуудсыг refresh хийнэ.</p>
+          {msg && <p className={`adm-msg ${msg.type}`}>{msg.text}</p>}
         </div>
       </Shell>
     )
