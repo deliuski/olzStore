@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud_firestore {
+  match /databases/{db}/documents {
+    // Сайт зөвхөн event бичнэ, хэн ч уншиж чадахгүй (та Firebase Console-оос харна)
+    match /events/{id} {
+      allow create: if request.resource.data.type in ['view', 'checkout']
+                    && request.resource.data.keys().size() < 12
+                    && request.resource.data.slug is string
+                    && request.resource.data.slug.size() < 80;
+      allow read, update, delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
