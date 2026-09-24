@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getAuthMod, getDb } from '../lib/firebase.js'
-import { fetchDbProducts } from '../lib/products.js'
+import { useAdmin } from '../lib/auth.js'
+import { fetchDbProducts, PLACEHOLDER } from '../lib/products.js'
 import { uploadToCloudinary, cloudinaryReady, cld, videoPoster } from '../lib/cloudinary.js'
 import { getProduct as getStatic } from '../data/products.js'
 import { fmt, parseProductId, site } from '../data/site.js'
@@ -30,12 +31,11 @@ const toForm = (p) => ({
   price: String(p.price ?? ''), deliveryFee: String(p.deliveryFee ?? ''),
   dealQty: p.deal ? String(p.deal.minQty) : '', dealPercent: p.deal ? String(p.deal.percent) : '',
   badges: (p.badges || []).join(', '), includes: (p.includes || []).join('\n'),
-  images: p.images?.filter((im) => !im.src.startsWith('/products/')) || [],
+  images: p.images?.filter((im) => im.src !== PLACEHOLDER) || [],
 })
 
 export default function Admin() {
-  const [user, setUser] = useState(undefined)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const { user, isAdmin, error: authError } = useAdmin()
   const [list, setList] = useState([])
   const [form, setForm] = useState(empty)
   const [editing, setEditing] = useState(null)
@@ -43,24 +43,8 @@ export default function Admin() {
   const [msg, setMsg] = useState(null)
   const [progress, setProgress] = useState(null)
 
-  useEffect(() => {
-    document.title = `Админ — ${site.brand}`
-    let unsub = () => {}
-    getAuthMod().then(({ auth, a }) => {
-      unsub = a.onAuthStateChanged(auth, async (u) => {
-        setUser(u)
-        if (!u) return setIsAdmin(false)
-        try {
-          const { db, fs } = await getDb()
-          const snap = await fs.getDoc(fs.doc(db, 'admins', u.uid))
-          setIsAdmin(snap.exists())
-        } catch {
-          setIsAdmin(false)
-        }
-      })
-    })
-    return () => unsub()
-  }, [])
+  useEffect(() => { document.title = `Админ — ${site.brand}` }, [])
+  useEffect(() => { if (authError) flash('err', authError) }, [authError])
 
   useEffect(() => { if (isAdmin) reload() }, [isAdmin])
 
@@ -181,7 +165,7 @@ export default function Admin() {
     } catch (e) { flash('err', e.message) }
   }
 
-  if (user === undefined) return <Shell><p className="muted">Ачаалж байна…</p></Shell>
+  if (user === undefined || (user && isAdmin === undefined)) return <Shell><p className="muted">Ачаалж байна…</p></Shell>
 
   if (!user) {
     return (
@@ -212,6 +196,7 @@ export default function Admin() {
             <button className="adm-btn" onClick={() => navigator.clipboard?.writeText(user.uid)}>Хуулах</button>
           </div>
           <p className="muted small">Хадгалсны дараа энэ хуудсыг refresh хийнэ.</p>
+          {msg && <p className={`adm-msg ${msg.type}`}>{msg.text}</p>}
         </div>
       </Shell>
     )
