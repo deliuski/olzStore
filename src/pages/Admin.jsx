@@ -185,18 +185,6 @@ export default function Admin() {
       <Shell user={user} onLogout={logout}>
         <div className="adm-card">
           <h1>Эрх алга байна</h1>
-          <p>Энэ бүртгэлд бараа нэмэх эрх өгөөгүй байна. Эрх өгөхийн тулд:</p>
-          <ol className="adm-steps">
-            <li>Firebase Console → Firestore Database → <b>Start collection</b></li>
-            <li>Collection ID: <code>admins</code></li>
-            <li>Document ID-д доорх UID-г хуулж тавина (field-д <code>email</code> гэх мэт юу ч бичиж болно)</li>
-          </ol>
-          <div className="adm-uid">
-            <code>{user.uid}</code>
-            <button className="adm-btn" onClick={() => navigator.clipboard?.writeText(user.uid)}>Хуулах</button>
-          </div>
-          <p className="muted small">Хадгалсны дараа энэ хуудсыг refresh хийнэ.</p>
-          {msg && <p className={`adm-msg ${msg.type}`}>{msg.text}</p>}
         </div>
       </Shell>
     )

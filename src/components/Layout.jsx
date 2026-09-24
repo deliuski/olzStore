@@ -5,7 +5,7 @@ export function Header() {
   return (
     <header className="hdr">
       <div className="wrap hdr-in">
-        <Link to="/" className="logo" aria-label={site.brand}>
+        <Link className="logo" aria-label={site.brand}>
           <span className="logo-mark" aria-hidden="true" />
           <span className="logo-word">{site.brand.toLowerCase()}</span>
         </Link>
