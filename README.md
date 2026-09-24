@@ -57,6 +57,18 @@ npm run dev        # http://localhost:5173/p/gar-zugshruulegch-nom
 3. Environment Variables хэсэгт `.env` дахь утгуудаа (Cloudinary-г оруулаад) нэмнэ. `VITE_SITE_URL`-д Vercel домэйнээ бичнэ (FB preview зурагт хэрэгтэй).
 4. Deploy.
 
+## 4б. Firebase Hosting дээр байршуулах (`olzstore.web.app`)
+Компьютер дээрээ (Node.js суусан байх):
+```bash
+npm install
+# .env файлд VITE_CLOUDINARY_* болон VITE_SITE_URL=https://olzstore.web.app бичнэ
+npx firebase-tools login          # нэг удаа
+npm run build
+npx firebase-tools deploy --only hosting,firestore:rules
+```
+Дараа нь https://olzstore.web.app болон https://olzstore.web.app/admin дээр орно.
+Бараа нэмэх бүрд дахин deploy хийх шаардлагагүй (бараа Firestore-оос шууд ачаалагдана) — зөвхөн код өөрчлөгдөхөд deploy хийнэ.
+
 ## 5. Линкээ хуваалцах
 Суваг бүрд өөр `utm_source` нэмбэл аль суваг илүү ажилласныг Firestore-оос харна:
 ```
